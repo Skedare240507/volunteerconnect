@@ -1,3 +1,5 @@
+"use client";
+
 import Navbar from "@/components/Navbar";
 import Hero from "@/components/Hero";
 import { HandHelping, Heart, ShieldCheck, Zap } from "lucide-react";
