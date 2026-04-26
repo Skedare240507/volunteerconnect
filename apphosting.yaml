@@ -1,0 +1,52 @@
+runConfig:
+  # Minimum 1 instance to avoid cold starts
+  minInstances: 1
+  maxInstances: 10
+  concurrency: 80
+  cpu: 1
+  memoryMiB: 512
+  # Timeout for server-side rendering
+  timeoutSeconds: 60
+
+env:
+  # Gemini AI (server-side only — keep secret)
+  - variable: GEMINI_API_KEY
+    secret: gemini-api-key
+
+  # Resend Email (server-side only — keep secret)
+  - variable: RESEND_API_KEY
+    secret: resend-api-key
+
+  - variable: CONTACT_RECEIVER_EMAIL
+    value: kedaresahil70@gmail.com
+
+  # Firebase public config (safe to expose — NEXT_PUBLIC prefix)
+  - variable: NEXT_PUBLIC_FIREBASE_API_KEY
+    availability:
+      - BUILD
+      - RUNTIME
+
+  - variable: NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
+    availability:
+      - BUILD
+      - RUNTIME
+
+  - variable: NEXT_PUBLIC_FIREBASE_PROJECT_ID
+    availability:
+      - BUILD
+      - RUNTIME
+
+  - variable: NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
+    availability:
+      - BUILD
+      - RUNTIME
+
+  - variable: NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
+    availability:
+      - BUILD
+      - RUNTIME
+
+  - variable: NEXT_PUBLIC_FIREBASE_APP_ID
+    availability:
+      - BUILD
+      - RUNTIME
