@@ -13,7 +13,7 @@ import {
   Loader2,
   Trash2,
 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { db } from "@/lib/firebase";
 import { collection, onSnapshot, query, orderBy, deleteDoc, doc } from "firebase/firestore";
 import AddCoordinatorModal from "./AddCoordinatorModal";
@@ -32,7 +32,7 @@ interface Coordinator {
   availability: string;
 }
 
-export default function CoordinatorsPage() {
+function CoordinatorsContent() {
   const [coordinators, setCoordinators] = useState<Coordinator[]>([]);
   const [loading, setLoading] = useState(true);
   const searchParams = useSearchParams();
@@ -225,5 +225,13 @@ export default function CoordinatorsPage() {
         )}
       </AnimatePresence>
     </div>
+  );
+}
+
+export default function CoordinatorsPage() {
+  return (
+    <Suspense fallback={<div className="py-24 flex justify-center"><Loader2 className="w-10 h-10 animate-spin text-primary" /></div>}>
+      <CoordinatorsContent />
+    </Suspense>
   );
 }

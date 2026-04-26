@@ -9,10 +9,11 @@ import {
   Plus, 
   TrendingUp,
   Zap,
-  Sparkles
+  Sparkles,
+  Loader2
 } from "lucide-react";
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { db } from "@/lib/firebase";
 import { collection, query, onSnapshot, limit, orderBy } from "firebase/firestore";
@@ -20,7 +21,7 @@ import LiveActivityFeed from "@/components/LiveActivityFeed";
 import ExportDataButton from "@/components/ExportDataButton";
 import { useAuth } from "@/lib/auth-context";
 
-export default function NgoDashboardPage() {
+function NgoDashboardContent() {
   const { user } = useAuth();
   const searchParams = useSearchParams();
   const searchTerm = (searchParams.get("s") || "").toLowerCase();
@@ -36,7 +37,6 @@ export default function NgoDashboardPage() {
   const [activities, setActivities] = useState<any[]>([]);
 
   useEffect(() => {
-    // 1. Snapshot for Resources
     let qRes;
     try {
       qRes = query(collection(db, "resources"), orderBy("createdAt", "desc"), limit(10));
@@ -55,7 +55,6 @@ export default function NgoDashboardPage() {
       updateStat("Active Resources", active.toString());
     }, (err) => console.error("Res Snapshot Error:", err));
 
-    // 2. Snapshot for Tasks
     const qTasks = query(collection(db, "tasks"));
     const unsubTasks = onSnapshot(qTasks, (snap) => {
       const assigned = snap.docs.filter(d => d.data().status === "assigned").length;
@@ -65,13 +64,11 @@ export default function NgoDashboardPage() {
       updateStat("Resolved Today", completed.toString());
     });
 
-    // 3. Snapshot for Activities
     const qAct = query(collection(db, "activities"), orderBy("timestamp", "desc"), limit(10));
     const unsubAct = onSnapshot(qAct, (snap) => {
       setActivities(snap.docs.map(d => ({ id: d.id, ...d.data() })));
     });
 
-    // 4. Fetch AI Briefing
     fetch("/api/briefing")
       .then(res => res.json())
       .then(data => setBriefing(data))
@@ -139,7 +136,6 @@ export default function NgoDashboardPage() {
       </div>
 
       <div className="grid lg:grid-cols-3 gap-8">
-        {/* Gemini Daily Briefing */}
         <div className="lg:col-span-2 space-y-6">
           <motion.div 
             initial={{ opacity: 0 }}
@@ -162,7 +158,6 @@ export default function NgoDashboardPage() {
             </button>
           </motion.div>
 
-          {/* High Priority Resources Table */}
           <div className="glass rounded-3xl p-8">
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-xl font-bold">Recent Resource Requests</h3>
@@ -212,7 +207,6 @@ export default function NgoDashboardPage() {
           </div>
         </div>
 
-        {/* Sidebar Activity */}
         <div className="glass rounded-3xl p-8 h-fit">
           <LiveActivityFeed maxItems={8} />
         </div>
@@ -221,4 +215,10 @@ export default function NgoDashboardPage() {
   );
 }
 
-// Remove the local ActivityItem as we use the component now
+export default function NgoDashboardPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center p-12"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>}>
+      <NgoDashboardContent />
+    </Suspense>
+  );
+}

@@ -1,9 +1,9 @@
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 
 async function run() {
-  const genAI = new GoogleGenerativeAI("AIzaSyC8pzExGQqhg39kNqrXKn0J6rPVzpuuPIY");
+  const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
   try {
-    const response = await fetch("https://generativelanguage.googleapis.com/v1beta/models?key=AIzaSyC8pzExGQqhg39kNqrXKn0J6rPVzpuuPIY");
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${process.env.GEMINI_API_KEY}`);
     const data = await response.json();
     console.log("Models:", data.models.map(m => m.name).join(", "));
   } catch (e) {

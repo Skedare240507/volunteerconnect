@@ -1,5 +1,7 @@
 "use client";
 
+export const dynamic = "force-dynamic";
+
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -15,7 +17,39 @@ import {
   HandHelping
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
+
+function SearchInput() {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const [searchValue, setSearchValue] = useState(searchParams.get("s") || "");
+
+  // Debounce search URL update
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const params = new URLSearchParams(searchParams.toString());
+      if (searchValue) params.set("s", searchValue);
+      else params.delete("s");
+      router.replace(`${pathname}?${params.toString()}`);
+    }, 500);
+    
+    return () => clearTimeout(timer);
+  }, [searchValue, pathname, router, searchParams]);
+
+  return (
+    <div className="flex items-center gap-4 bg-white/5 px-4 py-2 rounded-full border border-white/5 w-96">
+      <Search className="w-4 h-4 text-text-muted" />
+      <input 
+        type="text" 
+        value={searchValue}
+        onChange={(e) => setSearchValue(e.target.value)}
+        placeholder="Search resources, tasks..." 
+        className="bg-transparent border-none outline-none text-sm w-full placeholder:text-text-muted text-white"
+      />
+    </div>
+  );
+}
 
 const menuItems = [
   { name: "Overview", icon: LayoutDashboard, href: "/dashboard/ngo" },
@@ -32,8 +66,6 @@ export default function NgoDashboardLayout({
   const pathname = usePathname();
   const { logout, userData, user, loading } = useAuth();
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const [searchValue, setSearchValue] = useState(searchParams.get("s") || "");
 
   // Protect NGO dashboard
   useEffect(() => {
@@ -57,21 +89,6 @@ export default function NgoDashboardLayout({
     }
   };
 
-  const handleSearch = (val: string) => {
-    setSearchValue(val);
-  };
-
-  // Debounce search URL update to prevent lag
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      const params = new URLSearchParams(searchParams.toString());
-      if (searchValue) params.set("s", searchValue);
-      else params.delete("s");
-      router.replace(`${pathname}?${params.toString()}`);
-    }, 500); // 500ms debounce
-    
-    return () => clearTimeout(timer);
-  }, [searchValue, pathname, router, searchParams]);
 
   return (
     <div className="flex h-screen bg-[#0A1628] text-foreground overflow-hidden">
@@ -126,16 +143,9 @@ export default function NgoDashboardLayout({
       <main className="flex-grow flex flex-col overflow-hidden">
         {/* Header */}
         <header className="h-20 border-b border-white/5 px-8 flex items-center justify-between bg-[#0F2137]/10 backdrop-blur-md">
-          <div className="flex items-center gap-4 bg-white/5 px-4 py-2 rounded-full border border-white/5 w-96">
-            <Search className="w-4 h-4 text-text-muted" />
-            <input 
-              type="text" 
-              value={searchValue}
-              onChange={(e) => handleSearch(e.target.value)}
-              placeholder="Search resources, tasks..." 
-              className="bg-transparent border-none outline-none text-sm w-full placeholder:text-text-muted text-white"
-            />
-          </div>
+          <Suspense fallback={<div className="w-96 h-10 bg-white/5 rounded-full animate-pulse" />}>
+            <SearchInput />
+          </Suspense>
 
           <div className="flex items-center gap-6">
             <div className="relative">

@@ -13,17 +13,18 @@ import {
   CheckCircle2,
   AlertCircle,
   Trash2,
-  UserPlus
+  UserPlus,
+  Loader2
 } from "lucide-react";
 import Link from "next/link";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { db } from "@/lib/firebase";
 import { collection, onSnapshot, query, orderBy, doc, deleteDoc, updateDoc, addDoc } from "firebase/firestore";
 import ResourceImport from "@/components/ResourceImport";
 import { AnimatePresence } from "framer-motion";
 
-export default function ResourceInventoryPage() {
+function ResourceInventoryContent() {
   const [resources, setResources] = useState<any[]>([]);
   const [coordinators, setCoordinators] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -33,7 +34,6 @@ export default function ResourceInventoryPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Listen to resources
     const q = query(collection(db, "resources"), orderBy("createdAt", "desc"));
     const unsubRes = onSnapshot(q, (snap) => {
       setResources(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
@@ -45,7 +45,6 @@ export default function ResourceInventoryPage() {
       setLoading(false);
     });
 
-    // Listen to coordinators
     const unsubCoord = onSnapshot(collection(db, "coordinators"), (snap) => {
       setCoordinators(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
     }, (err) => {
@@ -75,7 +74,6 @@ export default function ResourceInventoryPage() {
       return;
     }
 
-    // Find nearest
     const resLat = res.location?.lat || 18.5204;
     const resLng = res.location?.lng || 73.8567;
 
@@ -121,7 +119,6 @@ export default function ResourceInventoryPage() {
 
   return (
     <div className="space-y-8">
-      {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold mb-2">Resource Inventory</h1>
@@ -142,14 +139,12 @@ export default function ResourceInventoryPage() {
         </div>
       </div>
 
-      {/* ... stats card ... */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <StatCard label="Active Broadcasts" value={resources.length.toString()} color="text-amber-400" />
         <StatCard label="Matched Needs" value={resources.filter(r => r.status === 'matched').length.toString()} color="text-emerald-400" />
         <StatCard label="Total Impact" value={(resources.reduce((acc: any, curr: any) => acc + (curr.affectedCount || 0), 0)).toLocaleString()} color="text-primary" />
       </div>
 
-      {/* Filters */}
       <div className="flex flex-col md:flex-row gap-4">
         {error && (
           <div className="w-full p-4 bg-red-400/10 border border-red-400/20 rounded-2xl text-red-400 text-sm font-medium flex items-center gap-3">
@@ -169,10 +164,9 @@ export default function ResourceInventoryPage() {
         </button>
       </div>
 
-      {/* Resource Cards */}
       {loading ? (
         <div className="py-20 flex justify-center">
-          <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+          <Loader2 className="w-10 h-10 text-primary animate-spin" />
         </div>
       ) : filtered.length > 0 ? (
         <div className="grid grid-cols-1 gap-4">
@@ -290,9 +284,7 @@ export default function ResourceInventoryPage() {
         {showImport && (
           <ResourceImport 
             onClose={() => setShowImport(false)}
-            onComplete={() => {
-              // Refresh or just let onSnapshot handle it
-            }}
+            onComplete={() => {}}
           />
         )}
       </AnimatePresence>
@@ -309,5 +301,13 @@ function StatCard({ label, value, color }: { label: string, value: string, color
         <Activity className="w-20 h-20" />
       </div>
     </div>
+  );
+}
+
+export default function ResourceInventoryPage() {
+  return (
+    <Suspense fallback={<div className="py-20 flex justify-center"><Loader2 className="w-10 h-10 text-primary animate-spin" /></div>}>
+      <ResourceInventoryContent />
+    </Suspense>
   );
 }
