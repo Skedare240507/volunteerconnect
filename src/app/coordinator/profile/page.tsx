@@ -149,6 +149,7 @@ export default function CoordinatorProfile() {
                       alt="QR Code" 
                       className="w-full h-full object-cover" 
                     />
+                  </div>
                   <p className="text-[10px] font-mono text-primary font-bold">{displayData.id}</p>
                   <p className="text-[10px] text-text-muted mt-2 text-center uppercase tracking-widest font-black">Verify at volunteerconnect.in/v</p>
                 </div>

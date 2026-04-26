@@ -2,14 +2,21 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
-import { HandHelping, Menu, X } from "lucide-react";
+import { HandHelping, Menu, X, LogOut } from "lucide-react";
 import { useState } from "react";
-
+import { useRouter } from "next/navigation";
+import { auth } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const { user, userData, loading } = useAuth();
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    await auth.signOut();
+    router.push("/login");
+  };
 
   const getDashboardHref = () => {
     const role = userData?.role || "user";
@@ -44,7 +51,7 @@ export default function Navbar() {
           <Link href="/contact" className="text-sm font-medium text-text-secondary hover:text-primary transition-colors">Contact</Link>
           
           {!loading && user ? (
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3">
               <div className="hidden lg:block text-right">
                 <p className="text-[10px] text-text-muted font-bold uppercase tracking-widest">Active Session</p>
                 <p className="text-sm font-black truncate max-w-[120px]">{userData?.name || user.displayName || "User"}</p>
@@ -64,6 +71,16 @@ export default function Navbar() {
                   <span className="text-sm font-bold">Dashboard</span>
                 </motion.div>
               </Link>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={handleLogout}
+                title="Sign Out"
+                className="flex items-center gap-2 px-4 py-2 rounded-full border border-red-500/30 text-red-400 hover:bg-red-500/10 transition-all text-sm font-bold"
+              >
+                <LogOut className="w-4 h-4" />
+                <span className="hidden lg:inline">Sign Out</span>
+              </motion.button>
             </div>
           ) : (
             <Link href="/login">
@@ -97,9 +114,17 @@ export default function Navbar() {
             <Link href="/resources" className="text-lg font-medium" onClick={() => setIsOpen(false)}>Resources</Link>
             <Link href="/contact" className="text-lg font-medium" onClick={() => setIsOpen(false)}>Contact</Link>
             {user ? (
-              <Link href={getDashboardHref()} className="w-full" onClick={() => setIsOpen(false)}>
-                <button className="w-full py-3 bg-primary rounded-xl font-bold">Go to Dashboard</button>
-              </Link>
+              <>
+                <Link href={getDashboardHref()} className="w-full" onClick={() => setIsOpen(false)}>
+                  <button className="w-full py-3 bg-primary rounded-xl font-bold">Go to Dashboard</button>
+                </Link>
+                <button
+                  onClick={() => { setIsOpen(false); handleLogout(); }}
+                  className="w-full py-3 border border-red-500/30 text-red-400 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-red-500/10 transition-all"
+                >
+                  <LogOut className="w-4 h-4" /> Sign Out
+                </button>
+              </>
             ) : (
               <Link href="/login" className="w-full" onClick={() => setIsOpen(false)}>
                 <button className="w-full py-3 bg-primary rounded-xl font-bold">Sign In</button>
