@@ -1,0 +1,6 @@
+# Ignore Firebase Functions folder (Vercel doesn't need to build this)
+functions/
+node_modules/
+.next/
+out/
+build/
