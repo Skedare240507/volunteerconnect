@@ -3,7 +3,12 @@ import Hero from "@/components/Hero";
 import { HandHelping, Heart, ShieldCheck, Zap } from "lucide-react";
 import Link from "next/link";
 import ImpactMetrics from "@/components/ImpactMetrics";
-import GlobalCrisisLiveMap from "@/components/GlobalCrisisLiveMap";
+import dynamic from "next/dynamic";
+
+const GlobalCrisisLiveMap = dynamic(() => import("@/components/GlobalCrisisLiveMap"), { 
+  ssr: false,
+  loading: () => <div className="h-[600px] w-full bg-white/5 animate-pulse rounded-[2rem] m-6" />
+});
 
 export default function Home() {
   return (
