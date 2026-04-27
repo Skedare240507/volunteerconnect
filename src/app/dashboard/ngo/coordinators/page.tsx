@@ -12,11 +12,13 @@ import {
   Users,
   Loader2,
   Trash2,
+  ClipboardList,
 } from "lucide-react";
 import { useState, useEffect, Suspense } from "react";
 import { db } from "@/lib/firebase";
 import { collection, onSnapshot, query, orderBy, deleteDoc, doc } from "firebase/firestore";
 import AddCoordinatorModal from "./AddCoordinatorModal";
+import AssignTaskModal from "./AssignTaskModal";
 import { useSearchParams } from "next/navigation";
 
 interface Coordinator {
@@ -38,6 +40,8 @@ function CoordinatorsContent() {
   const searchParams = useSearchParams();
   const searchTerm = searchParams.get("s") || "";
   const [showModal, setShowModal] = useState(false);
+  const [showAssignModal, setShowAssignModal] = useState(false);
+  const [selectedCoordinator, setSelectedCoordinator] = useState<Coordinator | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -204,23 +208,44 @@ function CoordinatorsContent() {
               </div>
 
               <div className="p-4 border-t border-white/5">
-                <Link href={`/dashboard/ngo/coordinators/${worker.uid}`} className="w-full">
-                  <button className="w-full py-3 bg-white/5 hover:bg-white/10 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all">
-                    <CreditCard className="w-4 h-4" /> View ID Card
+                <div className="flex gap-2">
+                  <Link href={`/dashboard/ngo/coordinators/${worker.uid}`} className="flex-1">
+                    <button title="View ID Card" className="w-full py-3 bg-white/5 hover:bg-white/10 rounded-xl text-[10px] font-bold flex items-center justify-center gap-2 transition-all">
+                      <CreditCard className="w-4 h-4" /> View ID
+                    </button>
+                  </Link>
+                  <button 
+                    onClick={() => {
+                      setSelectedCoordinator(worker);
+                      setShowAssignModal(true);
+                    }}
+                    className="flex-1 py-3 bg-primary/10 hover:bg-primary/20 text-primary rounded-xl text-[10px] font-bold flex items-center justify-center gap-2 transition-all border border-primary/20"
+                  >
+                    <ClipboardList className="w-4 h-4" /> Assign
                   </button>
-                </Link>
+                </div>
               </div>
             </motion.div>
           ))}
         </div>
       )}
 
-      {/* Add Modal */}
+      {/* Modals */}
       <AnimatePresence>
         {showModal && (
           <AddCoordinatorModal
             onClose={() => setShowModal(false)}
             onSuccess={() => setShowModal(false)}
+          />
+        )}
+        {showAssignModal && selectedCoordinator && (
+          <AssignTaskModal
+            coordinator={selectedCoordinator}
+            onClose={() => setShowAssignModal(false)}
+            onSuccess={() => {
+              setShowAssignModal(false);
+              alert("Task assigned successfully!");
+            }}
           />
         )}
       </AnimatePresence>

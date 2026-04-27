@@ -12,8 +12,9 @@ import {
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { db } from "@/lib/firebase";
-import { collection, query, where, onSnapshot, orderBy } from "firebase/firestore";
+import { collection, query, where, onSnapshot, orderBy, updateDoc, doc, deleteDoc, serverTimestamp, increment } from "firebase/firestore";
 import { useAuth } from "@/lib/auth-context";
+import { logActivity } from "@/lib/activity";
 
 export default function CoordinatorDashboard() {
   const { user, userData } = useAuth();
@@ -67,6 +68,76 @@ export default function CoordinatorDashboard() {
 
   const activeTask = tasks[0];
 
+  const handleAccept = async (taskId: string, taskTitle: string) => {
+    try {
+      await updateDoc(doc(db, "tasks", taskId), {
+        status: "in-progress",
+        acceptedAt: serverTimestamp(),
+      });
+      await logActivity({
+        user: userData?.name || "Coordinator",
+        action: "Accepted task",
+        target: taskTitle,
+        type: "success"
+      });
+    } catch (err) {
+      console.error("Error accepting task:", err);
+      alert("Failed to accept task.");
+    }
+  };
+
+  const handleDecline = async (taskId: string, taskTitle: string) => {
+    if (!confirm("Are you sure you want to decline this task?")) return;
+    try {
+      // Option A: Set status to declined
+      await updateDoc(doc(db, "tasks", taskId), {
+        status: "declined",
+        declinedAt: serverTimestamp(),
+      });
+      // Option B: Could also unassign it by setting coordinatorId: null
+      
+      await logActivity({
+        user: userData?.name || "Coordinator",
+        action: "Declined task",
+        target: taskTitle,
+        type: "info"
+      });
+    } catch (err) {
+      console.error("Error declining task:", err);
+      alert("Failed to decline task.");
+    }
+  };
+
+  const handleComplete = async (taskId: string, taskTitle: string) => {
+    try {
+      await updateDoc(doc(db, "tasks", taskId), {
+        status: "completed",
+        completedAt: serverTimestamp(),
+      });
+
+      // Increment completed tasks count for coordinator
+      if (user) {
+        // We need to find the coordinator doc by UID
+        // In this app, coordinators might be in 'coordinators' collection with doc ID as UID
+        await updateDoc(doc(db, "coordinators", user.uid), {
+          tasksCompleted: increment(1)
+        });
+      }
+
+      await logActivity({
+        user: userData?.name || "Coordinator",
+        action: "Completed task",
+        target: taskTitle,
+        type: "success"
+      });
+      
+      alert("Mission accomplished!");
+    } catch (err) {
+      console.error("Error completing task:", err);
+      alert("Failed to complete task.");
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -86,7 +157,11 @@ export default function CoordinatorDashboard() {
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="p-6 rounded-3xl bg-primary border border-primary-dark shadow-xl shadow-primary/20 relative overflow-hidden"
+            className={`p-6 rounded-3xl border shadow-xl relative overflow-hidden ${
+              activeTask.status === 'assigned' 
+                ? 'bg-gradient-to-br from-amber-500 to-amber-600 border-amber-400 shadow-amber-500/20' 
+                : 'bg-primary border-primary-dark shadow-primary/20'
+            }`}
           >
             <div className="absolute top-0 right-0 p-6 opacity-20">
               <Package className="w-20 h-20" />
@@ -94,42 +169,70 @@ export default function CoordinatorDashboard() {
             
             <div className="flex items-center gap-2 text-white/80 font-bold text-xs uppercase tracking-widest mb-4">
               <AlertCircle className="w-4 h-4" /> 
-              {activeTask.status === 'assigned' ? 'New Priority Task' : 'Task in Progress'}
+              {activeTask.status === 'assigned' ? 'New Task Notification' : 'Mission in Progress'}
             </div>
             
             <h2 className="text-2xl font-black text-white mb-2">{activeTask.title}</h2>
-            <p className="text-white/80 text-sm mb-6 flex items-center gap-2">
-              <MapPin className="w-4 h-4" /> {activeTask.location}
-            </p>
-
-            <div className="flex gap-3">
-              <Link href={`/coordinator/tasks/${activeTask.id}`} className="flex-grow">
-                <button className="w-full py-4 bg-white rounded-2xl text-primary font-bold shadow-lg flex items-center justify-center gap-2 hover:bg-white/90 transition-all">
-                  Open Task Details <ArrowRight className="w-4 h-4" />
-                </button>
-              </Link>
+            <div className="space-y-1 mb-6">
+               <p className="text-white/80 text-sm flex items-center gap-2">
+                  <MapPin className="w-4 h-4" /> {activeTask.location}
+               </p>
+               <p className="text-white/60 text-[10px] font-bold uppercase tracking-wide">
+                  NGO: {activeTask.ngoName}
+               </p>
             </div>
+
+            {activeTask.status === 'assigned' ? (
+              <div className="flex gap-3">
+                <button 
+                  onClick={() => handleAccept(activeTask.id, activeTask.title)}
+                  className="flex-1 py-4 bg-white rounded-2xl text-amber-600 font-bold shadow-lg flex items-center justify-center gap-2 hover:bg-white/90 transition-all"
+                >
+                  Accept Mission
+                </button>
+                <button 
+                  onClick={() => handleDecline(activeTask.id, activeTask.title)}
+                  className="px-6 py-4 bg-black/20 rounded-2xl text-white font-bold flex items-center justify-center gap-2 hover:bg-black/30 transition-all border border-white/10"
+                >
+                  Decline
+                </button>
+              </div>
+            ) : (
+              <div className="flex gap-3">
+                <Link href={`/coordinator/tasks/${activeTask.id}`} className="flex-grow">
+                  <button className="w-full py-4 bg-white rounded-2xl text-primary font-bold shadow-lg flex items-center justify-center gap-2 hover:bg-white/90 transition-all">
+                    Track Progress <ArrowRight className="w-4 h-4" />
+                  </button>
+                </Link>
+                <button 
+                  onClick={() => handleComplete(activeTask.id, activeTask.title)}
+                  className="px-6 py-4 bg-emerald-500 rounded-2xl text-white font-bold flex items-center justify-center gap-2 hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-500/30"
+                >
+                  Complete
+                </button>
+              </div>
+            )}
           </motion.div>
 
-          {/* Workflow Placeholder */}
+          {/* Workflow */}
           <div className="glass p-6 rounded-3xl space-y-4">
-            <h3 className="text-xs font-bold text-text-muted uppercase tracking-widest text-center">Next Steps</h3>
+            <h3 className="text-xs font-bold text-text-muted uppercase tracking-widest text-center">Operation Status</h3>
             <div className="flex flex-col gap-3">
               <WorkflowButton 
                 step="1" 
-                label="Accept Task" 
+                label="Mission Acceptance" 
                 active={activeTask.status === 'assigned'} 
                 completed={activeTask.status !== 'assigned'}
               />
               <WorkflowButton 
                 step="2" 
-                label="Start Travel" 
+                label="Transit & Delivery" 
                 active={activeTask.status === 'in-progress'}
                 disabled={activeTask.status === 'assigned'} 
               />
               <WorkflowButton 
                 step="3" 
-                label="Verify Completion" 
+                label="Impact Verification" 
                 disabled={activeTask.status !== 'in-progress'} 
               />
             </div>

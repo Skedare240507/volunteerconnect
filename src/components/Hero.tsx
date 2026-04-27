@@ -52,7 +52,7 @@ export default function Hero() {
           transition={{ duration: 0.8, ease: "easeOut" }}
           className="text-5xl md:text-7xl font-extrabold tracking-tight mb-6"
         >
-          {user ? <>Empowering your <span className="text-primary italic">Impact</span></> : <>Smart <span className="text-primary italic">Resource</span> <br className="hidden md:block" /> Allocation Platform</>}
+          {user ? <>Empowering your <span className="text-primary">Impact</span></> : <>Smart <span className="text-primary">Resource</span> <br className="hidden md:block" /> Allocation Platform</>}
         </motion.h1>
 
         {/* Sub-headline */}
