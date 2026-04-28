@@ -38,10 +38,19 @@ function ForgotPasswordForm() {
     setError("");
     
     try {
-      await sendPasswordResetEmail(auth, email);
+      // In a real app, you might check if the user exists in your /users collection first
+      // for better feedback, but sendPasswordResetEmail is the core Firebase function.
+      await sendPasswordResetEmail(auth, email, {
+        url: window.location.origin + "/login", // Redirect back to login after reset
+      });
       setSent(true);
     } catch (err: any) {
-      setError(err.message?.replace("Firebase: ", "") || "Failed to send reset email.");
+      console.error("Reset error:", err);
+      if (err.code === "auth/user-not-found") {
+        setError("No account found with this email address.");
+      } else {
+        setError(err.message?.replace("Firebase: ", "") || "Failed to send reset email.");
+      }
     } finally {
       setLoading(false);
     }
@@ -86,12 +95,21 @@ function ForgotPasswordForm() {
                 <div className="w-20 h-20 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto border border-emerald-500/20">
                   <CheckCircle2 className="w-10 h-10 text-emerald-500" />
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-4">
                   <h2 className="text-2xl font-bold">Check Your Signal</h2>
-                  <p className="text-text-secondary leading-relaxed">
-                    A recovery link has been dispatched to <span className="text-white font-bold">{email}</span>.
-                    Check your inbox and follow the instructions to secure your account.
-                  </p>
+                  <div className="text-text-secondary leading-relaxed space-y-4">
+                    <p>
+                      A "Real" recovery link has been dispatched to <span className="text-white font-bold">{email}</span>.
+                    </p>
+                    <div className="bg-white/5 border border-white/10 rounded-2xl p-4 text-xs text-left">
+                      <p className="font-bold text-primary mb-2 italic">⚠️ Important Step:</p>
+                      <ul className="list-disc list-inside space-y-1">
+                        <li>Check your <span className="text-amber-400">Spam/Junk</span> folder if not found.</li>
+                        <li>The link will expire in <span className="text-amber-400">1 hour</span>.</li>
+                        <li>After clicking the link, your password will be updated in the system.</li>
+                      </ul>
+                    </div>
+                  </div>
                 </div>
                 <div className="pt-4">
                   <Link 

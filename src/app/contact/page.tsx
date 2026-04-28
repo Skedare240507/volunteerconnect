@@ -45,7 +45,7 @@ export default function ContactPage() {
         const data = await res.json();
         setAiPreview(
           data.reply ||
-            "Thank you for reaching out. Our team will respond within 24 hours with a personalized solution."
+          "Thank you for reaching out. Our team will respond within 24 hours with a personalized solution."
         );
       } catch {
         setAiPreview(
@@ -91,19 +91,19 @@ export default function ContactPage() {
           <BackButton />
         </div>
         <div className="text-center">
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="max-w-2xl mx-auto space-y-4"
-        >
-          <span className="inline-block px-4 py-2 bg-primary/10 border border-primary/20 rounded-full text-primary text-sm font-bold">
-            We'd love to hear from you
-          </span>
-          <h1 className="text-5xl font-black">Contact Us</h1>
-          <p className="text-text-secondary text-lg">
-            Whether you're an NGO looking to partner or a volunteer ready to help — we're here.
-          </p>
-        </motion.div>
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="max-w-2xl mx-auto space-y-4"
+          >
+            <span className="inline-block px-4 py-2 bg-primary/10 border border-primary/20 rounded-full text-primary text-sm font-bold">
+              We'd love to hear from you
+            </span>
+            <h1 className="text-5xl font-black">Contact Us</h1>
+            <p className="text-text-secondary text-lg">
+              Whether you're an NGO looking to partner or a volunteer ready to help — we're here.
+            </p>
+          </motion.div>
         </div>
       </section>
 
@@ -122,7 +122,7 @@ export default function ContactPage() {
                 </div>
                 <div>
                   <p className="font-bold mb-1">Email</p>
-                  <p className="text-text-secondary text-sm">hello@volunteerconnect.in</p>
+                  <p className="text-text-secondary text-sm">volunteerconnect065@gmail.com</p>
                 </div>
               </div>
               <div className="glass-card p-6 flex items-start gap-4">
@@ -131,7 +131,7 @@ export default function ContactPage() {
                 </div>
                 <div>
                   <p className="font-bold mb-1">Phone</p>
-                  <p className="text-text-secondary text-sm">+91 98765 43210</p>
+                  <p className="text-text-secondary text-sm">+91 9503494953 </p>
                 </div>
               </div>
               <div className="glass-card p-6 flex items-start gap-4">
@@ -172,7 +172,7 @@ export default function ContactPage() {
                   </div>
                   <h2 className="text-3xl font-black">Mission Dispatch Complete</h2>
                   <p className="text-text-secondary leading-relaxed max-w-md mx-auto">
-                    Your inquiry has been encrypted and routed to our coordination headquarters. 
+                    Your inquiry has been encrypted and routed to our coordination headquarters.
                     Expect a response from our mission control within 24 hours.
                   </p>
                   <button
@@ -304,7 +304,7 @@ export default function ContactPage() {
             <HandHelping className="text-primary w-5 h-5" />
             <span className="font-bold">VolunteerConnect</span>
           </div>
-          <p className="text-sm text-text-muted">© 2025 VolunteerConnect. Google Solution Challenge 2025.</p>
+          <p className="text-sm text-text-muted">© 2026 VolunteerConnect.</p>
         </div>
       </footer>
     </div>

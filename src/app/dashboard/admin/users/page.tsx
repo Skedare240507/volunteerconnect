@@ -16,7 +16,10 @@ import {
   Unlock,
   Building2,
   Crown,
-  Loader2
+  Loader2,
+  Download,
+  FileSpreadsheet,
+  FileText
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { db } from "@/lib/firebase";
@@ -24,6 +27,7 @@ import { collection, query, onSnapshot, orderBy, doc, updateDoc } from "firebase
 import { logAdminAction } from "@/lib/auditLog";
 import AdminForm from "./AdminForm";
 import { AnimatePresence } from "framer-motion";
+import { exportToCSV, exportToXLSX, exportToPDF } from "@/lib/export-utils";
 
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<any[]>([]);
@@ -35,7 +39,11 @@ export default function AdminUsersPage() {
   useEffect(() => {
     const q = query(collection(db, "users"), orderBy("createdAt", "desc"));
     const unsub = onSnapshot(q, (snap) => {
-      setUsers(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      setUsers(snap.docs.map(doc => ({ 
+        id: doc.id, 
+        ...doc.data(),
+        dateStr: doc.data().createdAt?.toDate?.() ? doc.data().createdAt.toDate().toLocaleDateString() : 'Recent'
+      })));
       setLoading(false);
     });
     return () => unsub();
@@ -77,29 +85,20 @@ export default function AdminUsersPage() {
     }
   };
 
-  const handleExportCSV = () => {
-    const headers = ["User Name", "Email", "Role", "Joined Date", "Status", "Banned At"];
-    const rows = users.map(user => [
-      user.name || "Anonymous",
-      user.email || "",
-      user.role || "user",
-      user.createdAt?.toDate?.() ? user.createdAt.toDate().toISOString() : "",
-      user.isBanned ? "Banned" : "Active",
-      user.bannedAt || ""
-    ]);
+  const handleExport = (format: 'csv' | 'xlsx' | 'pdf') => {
+    const exportData = filtered.map(user => ({
+      Name: user.name || "Anonymous",
+      Email: user.email || "",
+      Role: user.role || "user",
+      Joined: user.dateStr,
+      Status: user.isBanned ? "Banned" : "Active"
+    }));
 
-    const csvContent = [
-      headers.join(","),
-      ...rows.map(row => row.map(v => `"${v}"`).join(","))
-    ].join("\n");
-
-    const blob = new Blob([csvContent], { type: "text/csv" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `users_export_${new Date().toISOString().split('T')[0]}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
+    const filename = `Users_Governance_${new Date().toISOString().split('T')[0]}`;
+    
+    if (format === 'csv') exportToCSV(exportData, filename);
+    else if (format === 'xlsx') exportToXLSX(exportData, filename);
+    else exportToPDF(exportData, filename, "User Governance Report");
   };
 
   const filtered = users.filter(u => 
@@ -126,12 +125,29 @@ export default function AdminUsersPage() {
           <p className="text-text-secondary text-sm">Manage platform access, roles, and security for all accounts.</p>
         </div>
         <div className="flex flex-wrap gap-2 w-full xl:w-auto">
-          <button 
-            onClick={handleExportCSV}
-            className="bg-white/10 hover:bg-white/15 px-4 py-3 rounded-2xl flex items-center gap-2 font-bold transition-all text-sm backdrop-blur-md"
-          >
-            Export CSV
-          </button>
+          <div className="flex items-center gap-2 mr-2">
+            <button 
+              onClick={() => handleExport('csv')}
+              className="p-3 glass rounded-xl border border-white/5 hover:bg-white/10 transition-all group"
+              title="Export CSV"
+            >
+              <Download className="w-5 h-5 text-text-muted group-hover:text-primary" />
+            </button>
+            <button 
+              onClick={() => handleExport('xlsx')}
+              className="p-3 glass rounded-xl border border-white/5 hover:bg-white/10 transition-all group"
+              title="Export XLSX"
+            >
+              <FileSpreadsheet className="w-5 h-5 text-text-muted group-hover:text-amber-400" />
+            </button>
+            <button 
+              onClick={() => handleExport('pdf')}
+              className="p-3 glass rounded-xl border border-white/5 hover:bg-white/10 transition-all group"
+              title="Export PDF"
+            >
+              <FileText className="w-5 h-5 text-text-muted group-hover:text-red-400" />
+            </button>
+          </div>
           <button 
             onClick={() => setShowAdminForm(true)}
             className="bg-accent px-4 py-3 rounded-2xl flex items-center gap-2 font-bold shadow-lg shadow-accent/20 hover:scale-105 transition-all text-sm"

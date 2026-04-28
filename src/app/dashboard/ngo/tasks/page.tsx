@@ -13,12 +13,17 @@ import {
   MoreVertical,
   ChevronRight,
   Loader2,
-  Calendar
+  Calendar,
+  Download,
+  FileSpreadsheet,
+  FileText,
+  CalendarPlus
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { db } from "@/lib/firebase";
 import { collection, query, onSnapshot, orderBy, where } from "firebase/firestore";
 import Link from "next/link";
+import { exportToCSV, exportToXLSX, exportToPDF, addToGoogleCalendar } from "@/lib/export-utils";
 
 export default function NgoTasksPage() {
   const [tasks, setTasks] = useState<any[]>([]);
@@ -29,7 +34,12 @@ export default function NgoTasksPage() {
     // In a real app, we'd filter by the NGO's ID
     const q = query(collection(db, "tasks"), orderBy("createdAt", "desc"));
     const unsub = onSnapshot(q, (snap) => {
-      setTasks(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      setTasks(snap.docs.map(doc => ({ 
+        id: doc.id, 
+        ...doc.data(),
+        // Prepare date for export
+        dateStr: doc.data().createdAt?.toDate?.() ? doc.data().createdAt.toDate().toLocaleDateString() : 'N/A'
+      })));
       setLoading(false);
     });
     return () => unsub();
@@ -40,6 +50,22 @@ export default function NgoTasksPage() {
     t.coordinatorName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     t.location?.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const handleExport = (format: 'csv' | 'xlsx' | 'pdf') => {
+    const exportData = filtered.map(t => ({
+      Title: t.title,
+      Status: t.status,
+      Location: t.location,
+      Coordinator: t.coordinatorName || 'Unassigned',
+      Date: t.dateStr
+    }));
+
+    const filename = `Mission_Operations_${new Date().toISOString().split('T')[0]}`;
+    
+    if (format === 'csv') exportToCSV(exportData, filename);
+    else if (format === 'xlsx') exportToXLSX(exportData, filename);
+    else exportToPDF(exportData, filename, "Mission Operations Report");
+  };
 
   const getStatusStyle = (status: string) => {
     switch (status) {
@@ -59,6 +85,29 @@ export default function NgoTasksPage() {
           <p className="text-text-secondary text-sm">Monitor live task execution and coordinator performance.</p>
         </div>
         <div className="flex gap-4">
+          <div className="flex items-center gap-2">
+            <button 
+              onClick={() => handleExport('csv')}
+              className="p-3 glass rounded-xl border border-white/5 hover:bg-white/10 transition-all group"
+              title="Export CSV"
+            >
+              <Download className="w-5 h-5 text-text-muted group-hover:text-primary" />
+            </button>
+            <button 
+              onClick={() => handleExport('xlsx')}
+              className="p-3 glass rounded-xl border border-white/5 hover:bg-white/10 transition-all group"
+              title="Export Google Sheets / XLSX"
+            >
+              <FileSpreadsheet className="w-5 h-5 text-text-muted group-hover:text-amber-400" />
+            </button>
+            <button 
+              onClick={() => handleExport('pdf')}
+              className="p-3 glass rounded-xl border border-white/5 hover:bg-white/10 transition-all group"
+              title="Export PDF"
+            >
+              <FileText className="w-5 h-5 text-text-muted group-hover:text-red-400" />
+            </button>
+          </div>
           <div className="glass px-6 py-3 rounded-2xl flex items-center gap-3 border border-white/5">
             <div className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
             <span className="text-sm font-bold">{tasks.filter(t => t.status !== 'completed').length} Active Tasks</span>
@@ -106,7 +155,7 @@ export default function NgoTasksPage() {
                     </span>
                     <span className="text-[10px] text-text-muted font-bold flex items-center gap-1">
                        <Calendar className="w-3 h-3" />
-                       {task.createdAt?.toDate?.() ? task.createdAt.toDate().toLocaleDateString() : 'Today'}
+                       {task.dateStr}
                     </span>
                   </div>
 
@@ -131,11 +180,25 @@ export default function NgoTasksPage() {
                      </p>
                   </div>
                   <div className="h-10 w-px bg-white/5 hidden lg:block" />
-                  <Link href={`/dashboard/ngo/tasks/${task.id}`}>
-                    <button className="flex items-center gap-2 px-6 py-3 glass rounded-2xl font-bold text-xs border border-white/10 hover:bg-white/10 transition-all">
-                      Details <ChevronRight className="w-4 h-4 text-primary" />
+                  <div className="flex gap-2">
+                    <button 
+                      onClick={() => addToGoogleCalendar({
+                        title: task.title,
+                        location: task.location,
+                        description: task.description || `Task: ${task.title}`,
+                        date: task.createdAt?.toDate?.() || new Date()
+                      })}
+                      className="p-3 glass rounded-2xl hover:bg-white/10 transition-all text-text-muted hover:text-primary"
+                      title="Add to Google Calendar"
+                    >
+                      <CalendarPlus className="w-5 h-5" />
                     </button>
-                  </Link>
+                    <Link href={`/dashboard/ngo/tasks/${task.id}`}>
+                      <button className="flex items-center gap-2 px-6 py-3 glass rounded-2xl font-bold text-xs border border-white/10 hover:bg-white/10 transition-all">
+                        Details <ChevronRight className="w-4 h-4 text-primary" />
+                      </button>
+                    </Link>
+                  </div>
                   <button title="Options" className="p-2 text-text-muted hover:text-white transition-colors">
                     <MoreVertical className="w-5 h-5" />
                   </button>

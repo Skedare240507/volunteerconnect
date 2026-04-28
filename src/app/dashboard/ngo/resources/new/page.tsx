@@ -19,12 +19,14 @@ import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { useRouter } from "next/navigation";
 import { logActivity } from "@/lib/activity";
 import dynamic from "next/dynamic";
+import { useAuth } from "@/lib/auth-context";
 
 const LocationPickerMap = dynamic(() => import("@/components/LocationPickerMap"), { ssr: false });
 
 const categories = ["Food", "Health", "Shelter", "Education", "Eldercare", "Other"];
 
 export default function NewResourcePage() {
+  const { userData } = useAuth();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
@@ -41,6 +43,8 @@ export default function NewResourcePage() {
   const [affected, setAffected] = useState("");
   const [skills, setSkills] = useState("Any");
 
+  const isUserNotAllowedPhoto = userData?.role === "user";
+
   const handleLocationSelect = (selectedLat: number, selectedLng: number, address: string) => {
     setLat(selectedLat);
     setLng(selectedLng);
@@ -50,6 +54,10 @@ export default function NewResourcePage() {
   };
 
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (isUserNotAllowedPhoto) {
+      alert("Only organizations and administrators can add photos.");
+      return;
+    }
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -108,7 +116,7 @@ export default function NewResourcePage() {
       const resourceRef = await addDoc(collection(db, "resources"), resourceData);
       
       await logActivity({
-        user: "City NGO",
+        user: userData?.name || "NGO",
         action: "Posted new resource",
         target: title,
         type: "info"
@@ -264,17 +272,23 @@ export default function NewResourcePage() {
                   )}
                 </div>
                 <h3 className="text-xl font-bold mb-2">Upload Reference Photo</h3>
-                <p className="text-text-secondary text-sm mb-8">Optional: Attach a photo of the area or situation.</p>
-                <label className="px-8 py-3 glass rounded-xl border-dashed border-2 border-white/20 hover:border-primary/50 transition-all cursor-pointer">
-                  {uploadingImage ? "Uploading..." : photoURL ? "Change File" : "Browse Files"}
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={handlePhotoUpload}
-                    disabled={uploadingImage}
-                  />
-                </label>
+                <p className="text-text-secondary text-sm mb-8">
+                  {isUserNotAllowedPhoto 
+                    ? "As a standard user, you cannot add photos to resource requests." 
+                    : "Optional: Attach a photo of the area or situation."}
+                </p>
+                {!isUserNotAllowedPhoto && (
+                  <label className="px-8 py-3 glass rounded-xl border-dashed border-2 border-white/20 hover:border-primary/50 transition-all cursor-pointer">
+                    {uploadingImage ? "Uploading..." : photoURL ? "Change File" : "Browse Files"}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handlePhotoUpload}
+                      disabled={uploadingImage}
+                    />
+                  </label>
+                )}
               </div>
             )}
 

@@ -172,30 +172,20 @@ function LoginContent() {
     }
   };
 
-  const handleMicrosoftLogin = async () => {
-    if (!showOAuthOnly) return;
-    setLoading(true);
-    setError("");
-    try {
-      const provider = new OAuthProvider("microsoft.com");
-      const cred = await signInWithPopup(auth, provider);
-      
-      const userDoc = await getDoc(doc(db, "users", cred.user.uid));
-      if (!userDoc.exists()) {
-        await setDoc(doc(db, "users", cred.user.uid), {
-          uid: cred.user.uid,
-          email: cred.user.email,
-          displayName: cred.user.displayName,
-          role: "user",
-          isBanned: false,
-          createdAt: new Date().toISOString(),
-        });
-      }
-      router.push("/");
-    } catch (err: any) {
-      setError(err.message?.replace("Firebase: ", "") || "Microsoft sign-in failed.");
-    } finally {
-      setLoading(false);
+  const fillDemoCreds = (role: Role) => {
+    if (role === "admin") {
+      setEmail("sahilkedare05@gmail.com");
+      setPassword("admin@123");
+    } else if (role === "superadmin") {
+      setEmail("smk77165@gmail.com");
+      setPassword("Add@123");
+    } else if (role === "coordinator") {
+      setEmail("coordinator@demo.com");
+      setPassword("password123");
+      setUniqueId("VC-HCF-2025-0042");
+    } else if (role === "ngodashboard") {
+      setEmail("ngo@demo.com");
+      setPassword("password123");
     }
   };
 
@@ -339,6 +329,16 @@ function LoginContent() {
                 {loading ? "Signing in..." : "Sign In"}
               </button>
 
+              {activeRole !== "user" && (
+                <button
+                  type="button"
+                  onClick={() => fillDemoCreds(activeRole)}
+                  className="w-full py-2 border border-primary/20 rounded-xl text-[10px] uppercase font-black text-primary/60 hover:text-primary hover:bg-primary/5 transition-all tracking-[0.2em]"
+                >
+                  Use Demo Credentials
+                </button>
+              )}
+
               {showOAuthOnly && (
                 <div className="grid grid-cols-1 gap-4">
                   <button
@@ -354,23 +354,11 @@ function LoginContent() {
                     </svg>
                     Sign in with Google
                   </button>
-                  <button
-                    onClick={handleMicrosoftLogin}
-                    disabled={loading}
-                    className="flex items-center justify-center gap-3 py-4 glass rounded-2xl border border-white/10 hover:bg-white/10 transition-all font-bold text-sm disabled:opacity-50"
-                  >
-                    <svg className="w-5 h-5" viewBox="0 0 24 24">
-                      <path fill="#F25022" d="M1 1h10v10H1z" />
-                      <path fill="#7FBA00" d="M13 1h10v10H13z" />
-                      <path fill="#00A4EF" d="M1 13h10v10H1z" />
-                      <path fill="#FFB900" d="M13 13h10v10H13z" />
-                    </svg>
-                    Sign in with Microsoft
-                  </button>
                 </div>
               )}
 
               <p className="text-center text-xs text-text-muted">
+                Don't have an account?{" "}
                 <Link href="/register" className="text-primary hover:underline font-medium">
                   Register here
                 </Link>

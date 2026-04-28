@@ -52,6 +52,10 @@ export default function NgoSettingsPage() {
   ];
 
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (userData?.role === "user") {
+      alert("Operational restriction: Only organization representatives can update the official profile image.");
+      return;
+    }
     const file = e.target.files?.[0];
     if (!file) return;
 
