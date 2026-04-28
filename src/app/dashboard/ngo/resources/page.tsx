@@ -14,7 +14,10 @@ import {
   AlertCircle,
   Trash2,
   UserPlus,
-  Loader2
+  Loader2,
+  Download,
+  FileSpreadsheet,
+  FileText
 } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect, useMemo, Suspense } from "react";
@@ -23,6 +26,7 @@ import { db } from "@/lib/firebase";
 import { collection, onSnapshot, query, orderBy, doc, deleteDoc, updateDoc, addDoc } from "firebase/firestore";
 import ResourceImport from "@/components/ResourceImport";
 import { AnimatePresence } from "framer-motion";
+import { exportToCSV, exportToXLSX, exportToPDF, getGoogleCalendarUrl } from "@/lib/export-utils";
 
 function ResourceInventoryContent() {
   const [resources, setResources] = useState<any[]>([]);
@@ -117,12 +121,42 @@ function ResourceInventoryContent() {
     res.locationName?.toLowerCase().includes(searchTerm.toLowerCase())
   ), [resources, searchTerm]);
 
+  const handleExport = (format: 'csv' | 'xlsx' | 'pdf') => {
+    const exportData = filtered.map(res => ({
+      Title: res.title,
+      Status: res.status || 'Active',
+      Location: res.locationName || 'N/A',
+      Affected: res.affectedCount || 0,
+      Urgency: res.urgency || 3,
+      Date: res.createdAt?.toDate ? res.createdAt.toDate().toLocaleDateString() : 'N/A'
+    }));
+
+    const filename = `Resource_Inventory_${new Date().toISOString().split('T')[0]}`;
+    
+    if (format === 'csv') exportToCSV(exportData, filename);
+    else if (format === 'xlsx') exportToXLSX(exportData, filename);
+    else exportToPDF(exportData, filename, "Resource Inventory Report");
+  };
+
   return (
     <div className="space-y-8">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold mb-2">Resource Inventory</h1>
-          <p className="text-text-secondary text-sm">Monitor and manage all broadcasted needs across your service zones.</p>
+          <div className="flex items-center gap-3">
+            <p className="text-text-secondary text-sm">Monitor and manage all broadcasted needs across your service zones.</p>
+            <div className="flex items-center gap-1 border-l border-white/10 pl-3">
+              <button onClick={() => handleExport('csv')} className="p-1 hover:text-primary transition-colors" title="Export CSV">
+                <Download className="w-3 h-3" />
+              </button>
+              <button onClick={() => handleExport('xlsx')} className="p-1 hover:text-amber-400 transition-colors" title="Export XLSX">
+                <FileSpreadsheet className="w-3 h-3" />
+              </button>
+              <button onClick={() => handleExport('pdf')} className="p-1 hover:text-red-400 transition-colors" title="Export PDF">
+                <FileText className="w-3 h-3" />
+              </button>
+            </div>
+          </div>
         </div>
         <div className="flex gap-4 w-full md:w-auto">
           <button 

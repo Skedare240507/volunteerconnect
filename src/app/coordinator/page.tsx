@@ -7,7 +7,8 @@ import {
   Clock, 
   ArrowRight, 
   ShieldCheck,
-  AlertCircle
+  AlertCircle,
+  CalendarPlus
 } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect } from "react";
@@ -15,6 +16,7 @@ import { db } from "@/lib/firebase";
 import { collection, query, where, onSnapshot, orderBy, updateDoc, doc, deleteDoc, serverTimestamp, increment } from "firebase/firestore";
 import { useAuth } from "@/lib/auth-context";
 import { logActivity } from "@/lib/activity";
+import { addToGoogleCalendar } from "@/lib/export-utils";
 
 export default function CoordinatorDashboard() {
   const { user, userData } = useAuth();
@@ -199,6 +201,18 @@ export default function CoordinatorDashboard() {
               </div>
             ) : (
               <div className="flex gap-3">
+                <button 
+                  onClick={() => addToGoogleCalendar({
+                    title: activeTask.title,
+                    location: activeTask.location,
+                    description: `Assigned Mission from NGO: ${activeTask.ngoName}`,
+                    date: activeTask.createdAt?.toDate?.() || new Date()
+                  })}
+                  className="px-6 py-4 bg-white/10 rounded-2xl text-white font-bold flex items-center justify-center border border-white/20 hover:bg-white/20 transition-all"
+                  title="Add to Google Calendar"
+                >
+                  <CalendarPlus className="w-5 h-5" />
+                </button>
                 <Link href={`/coordinator/tasks/${activeTask.id}`} className="flex-grow">
                   <button className="w-full py-4 bg-white rounded-2xl text-primary font-bold shadow-lg flex items-center justify-center gap-2 hover:bg-white/90 transition-all">
                     Track Progress <ArrowRight className="w-4 h-4" />
@@ -316,5 +330,4 @@ function WorkflowButton({ step, label, active, disabled, completed }: { step: st
   );
 }
 
-// Missing import fix
-import { CheckCircle2 } from "lucide-react";
+

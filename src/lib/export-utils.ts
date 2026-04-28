@@ -41,6 +41,23 @@ export const exportToPDF = (data: any[], filename: string, title: string) => {
   doc.save(`${filename}.pdf`);
 };
 
+export const getGoogleCalendarUrl = (task: { title: string; location: string; description?: string; date?: Date }): string => {
+  const startTime = task.date || new Date();
+  const endTime = new Date(startTime.getTime() + 2 * 60 * 60 * 1000);
+
+  const formatDate = (date: Date) => date.toISOString().replace(/-|:|\\.\\d+/g, '');
+
+  const url = new URL('https://calendar.google.com/calendar/render');
+  url.searchParams.append('action', 'TEMPLATE');
+  url.searchParams.append('text', task.title);
+  url.searchParams.append('dates', `${formatDate(startTime)}/${formatDate(endTime)}`);
+  url.searchParams.append('details', task.description || `Volunteer mission: ${task.title} at ${task.location}`);
+  url.searchParams.append('location', task.location);
+  url.searchParams.append('trp', 'true');
+
+  return url.toString();
+};
+
 export const addToGoogleCalendar = (task: { title: string; location: string; description?: string; date?: Date }) => {
   const startTime = task.date || new Date();
   const endTime = new Date(startTime.getTime() + 2 * 60 * 60 * 1000); // Default to 2 hours

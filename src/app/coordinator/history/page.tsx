@@ -1,13 +1,14 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { CheckCircle2, MapPin, Clock, Calendar, ChevronRight, Search, Filter } from "lucide-react";
+import { CheckCircle2, MapPin, Clock, Calendar, ChevronRight, Search, Filter, Download, FileSpreadsheet, FileText } from "lucide-react";
 import { useState, useEffect } from "react";
 import { db } from "@/lib/firebase";
 import { collection, query, where, onSnapshot, orderBy } from "firebase/firestore";
 import BackButton from "@/components/BackButton";
 import { useAuth } from "@/lib/auth-context";
 import Link from "next/link";
+import { exportToCSV, exportToXLSX, exportToPDF } from "@/lib/export-utils";
 
 export default function TaskHistory() {
   const { userData } = useAuth();
@@ -38,15 +39,43 @@ export default function TaskHistory() {
     item.location?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const handleExport = (format: 'csv' | 'xlsx' | 'pdf') => {
+    const exportData = filtered.map(item => ({
+      Mission: item.title,
+      Location: item.location,
+      NGO: item.ngoName,
+      CompletedAt: item.completedAt?.toDate?.() ? item.completedAt.toDate().toLocaleDateString() : 'Recent'
+    }));
+
+    const filename = `Mission_History_${new Date().toISOString().split('T')[0]}`;
+    
+    if (format === 'csv') exportToCSV(exportData, filename);
+    else if (format === 'xlsx') exportToXLSX(exportData, filename);
+    else exportToPDF(exportData, filename, "Mission History Report");
+  };
+
   return (
     <div className="pb-20 space-y-6">
       <BackButton label="Back to Tasks" />
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-xl font-bold">Mission History</h1>
-          <p className="text-[10px] text-text-muted font-bold uppercase tracking-widest mt-1">
-            {history.length} Tasks Completed
-          </p>
+          <div className="flex items-center gap-3 mt-1">
+            <p className="text-[10px] text-text-muted font-bold uppercase tracking-widest">
+              {history.length} Tasks Completed
+            </p>
+            <div className="flex items-center gap-1">
+              <button onClick={() => handleExport('csv')} className="p-1 hover:text-primary transition-colors" title="Export CSV">
+                <Download className="w-3 h-3" />
+              </button>
+              <button onClick={() => handleExport('xlsx')} className="p-1 hover:text-amber-400 transition-colors" title="Export XLSX">
+                <FileSpreadsheet className="w-3 h-3" />
+              </button>
+              <button onClick={() => handleExport('pdf')} className="p-1 hover:text-red-400 transition-colors" title="Export PDF">
+                <FileText className="w-3 h-3" />
+              </button>
+            </div>
+          </div>
         </div>
         <div className="w-10 h-10 glass rounded-full flex items-center justify-center text-primary border border-primary/20">
           <CheckCircle2 className="w-5 h-5" />
