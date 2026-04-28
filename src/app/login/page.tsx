@@ -28,11 +28,9 @@ import { doc, getDoc, setDoc } from "firebase/firestore";
 type Role = "coordinator" | "ngodashboard" | "admin" | "superadmin" | "user";
 
 const allTabs: { role: Role; label: string; icon: React.ComponentType<any> }[] = [
+  { role: "user", label: "User", icon: UserCircle },
   { role: "coordinator", label: "Coordinator", icon: ClipboardList },
   { role: "ngodashboard", label: "NGO Dashboard", icon: Building2 },
-  { role: "admin", label: "Admin", icon: Shield },
-  { role: "superadmin", label: "Super Admin", icon: Crown },
-  { role: "user", label: "User", icon: UserCircle },
 ];
 
 const tabs = allTabs;
@@ -53,7 +51,7 @@ function LoginContent() {
   const [activeRole, setActiveRole] = useState<Role>(
     (requestedRole && ["admin", "superadmin", "coordinator", "ngodashboard", "user"].includes(requestedRole)) 
     ? requestedRole 
-    : "coordinator"
+    : "user"
   );
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -69,18 +67,20 @@ function LoginContent() {
     setError("");
     setLoading(true);
 
-    if (activeRole === "admin") {
-      if (email !== "sahilkedare05@gmail.com" || password !== "admin@123") {
-        setError("Invalid Admin credentials.");
-        setLoading(false);
-        return;
-      }
-    } else if (activeRole === "superadmin") {
-      if (email !== "smk77165@gmail.com" || password !== "Add@123") {
-        setError("Invalid Super Admin credentials.");
-        setLoading(false);
-        return;
-      }
+    // Special handling for the NEW demo credentials
+    const isDemoAccount = [
+      "admin@volconnect.com",
+      "user@volconnect.com",
+      "ngo@volconnect.com",
+      "coord@volconnect.com"
+    ].includes(email.toLowerCase());
+
+    const demoPassword = "password123";
+
+    if (isDemoAccount && password !== demoPassword) {
+      setError("Please use 'password123' for demo accounts.");
+      setLoading(false);
+      return;
     }
 
     try {
@@ -88,7 +88,7 @@ function LoginContent() {
       try {
         cred = await signInWithEmailAndPassword(auth, email, password);
       } catch (signInErr: any) {
-        if (isAdminRole && (signInErr.code === "auth/user-not-found" || signInErr.code === "auth/invalid-credential" || signInErr.code === "auth/invalid-login-credentials")) {
+        if ((isAdminRole || isDemoAccount) && (signInErr.code === "auth/user-not-found" || signInErr.code === "auth/invalid-credential" || signInErr.code === "auth/invalid-login-credentials")) {
           const { createUserWithEmailAndPassword } = await import("firebase/auth");
           cred = await createUserWithEmailAndPassword(auth, email, password);
         } else {
@@ -102,14 +102,27 @@ function LoginContent() {
       const userData = userDoc.data();
 
       if (!userData) {
-        if (isAdminRole) {
+        if (isAdminRole || isDemoAccount) {
+          const demoRoleMap: Record<string, Role> = {
+            "admin@volconnect.com": "admin",
+            "user@volconnect.com": "user",
+            "ngo@volconnect.com": "ngodashboard",
+            "coord@volconnect.com": "coordinator"
+          };
+          
+          const assignedRole = isDemoAccount ? demoRoleMap[email.toLowerCase()] : activeRole;
+
           await setDoc(doc(db, "users", cred.user.uid), {
             uid: cred.user.uid,
             email: cred.user.email,
-            role: activeRole,
+            role: assignedRole,
             isBanned: false,
             createdAt: new Date().toISOString(),
           });
+          
+          // Re-fetch logic or just use assignedRole
+          router.push(ROLE_REDIRECT[assignedRole]);
+          return;
         } else {
           setError(`Account not found. Please contact an admin to be added as a ${activeRole}.`);
           await auth.signOut();
@@ -174,20 +187,17 @@ function LoginContent() {
 
   const fillDemoCreds = (role: Role) => {
     if (role === "admin") {
-      setEmail("sahilkedare05@gmail.com");
-      setPassword("admin@123");
-    } else if (role === "superadmin") {
-      setEmail("smk77165@gmail.com");
-      setPassword("Add@123");
+      setEmail("admin@volconnect.com");
+      setPassword("password123");
     } else if (role === "coordinator") {
-      setEmail("sumit@gmail.com");
+      setEmail("coord@volconnect.com");
       setPassword("password123");
       setUniqueId("VC-HCF-2025-0042");
     } else if (role === "ngodashboard") {
-      setEmail("payalkedare26@gmail.com");
+      setEmail("ngo@volconnect.com");
       setPassword("password123");
     } else if (role === "user") {
-      setEmail("jon@gmail.com");
+      setEmail("user@volconnect.com");
       setPassword("password123");
     }
   };
@@ -370,25 +380,25 @@ function LoginContent() {
                   Available Roles & Access
                 </p>
                 <div className="grid grid-cols-2 gap-2">
-                  <div className="p-3 glass rounded-xl text-center">
+                  <div className="p-3 glass rounded-xl text-center cursor-pointer hover:bg-white/5 transition-colors" onClick={() => { setEmail("admin@volconnect.com"); setPassword("password123"); setActiveRole("user"); }}>
                     <p className="text-[10px] font-bold text-primary mb-1">ADMIN</p>
-                    <p className="text-[9px] text-text-muted truncate">sahilkedare05@gmail.com</p>
+                    <p className="text-[9px] text-text-muted truncate">admin@volconnect.com</p>
                   </div>
-                  <div className="p-3 glass rounded-xl text-center">
+                  <div className="p-3 glass rounded-xl text-center cursor-pointer hover:bg-white/5 transition-colors" onClick={() => { setEmail("user@volconnect.com"); setPassword("password123"); setActiveRole("user"); }}>
                     <p className="text-[10px] font-bold text-primary mb-1">USER</p>
-                    <p className="text-[9px] text-text-muted truncate">jon@gmail.com</p>
+                    <p className="text-[9px] text-text-muted truncate">user@volconnect.com</p>
                   </div>
-                  <div className="p-3 glass rounded-xl text-center">
+                  <div className="p-3 glass rounded-xl text-center cursor-pointer hover:bg-white/5 transition-colors" onClick={() => { setEmail("ngo@volconnect.com"); setPassword("password123"); setActiveRole("ngodashboard"); }}>
                     <p className="text-[10px] font-bold text-primary mb-1">NGO</p>
-                    <p className="text-[9px] text-text-muted truncate">payalkedare26@gmail.com</p>
+                    <p className="text-[9px] text-text-muted truncate">ngo@volconnect.com</p>
                   </div>
-                  <div className="p-3 glass rounded-xl text-center">
+                  <div className="p-3 glass rounded-xl text-center cursor-pointer hover:bg-white/5 transition-colors" onClick={() => { setEmail("coord@volconnect.com"); setPassword("password123"); setActiveRole("coordinator"); }}>
                     <p className="text-[10px] font-bold text-primary mb-1">COORD</p>
-                    <p className="text-[9px] text-text-muted truncate">sumit@gmail.com</p>
+                    <p className="text-[9px] text-text-muted truncate">coord@volconnect.com</p>
                   </div>
                 </div>
                 <p className="mt-4 text-[9px] text-center text-text-muted italic">
-                  Note: All passwords default to <span className="text-primary font-bold">password123</span> unless specified.
+                  Password for all: <span className="text-primary font-bold">password123</span>
                 </p>
               </div>
             </motion.div>
