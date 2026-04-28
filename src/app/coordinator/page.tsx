@@ -8,7 +8,8 @@ import {
   ArrowRight, 
   ShieldCheck,
   AlertCircle,
-  CalendarPlus
+  CalendarPlus,
+  CheckCircle2
 } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect } from "react";

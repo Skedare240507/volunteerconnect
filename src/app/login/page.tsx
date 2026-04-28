@@ -35,7 +35,7 @@ const allTabs: { role: Role; label: string; icon: React.ComponentType<any> }[] =
   { role: "user", label: "User", icon: UserCircle },
 ];
 
-const tabs = allTabs.filter(t => t.role !== "admin" && t.role !== "superadmin");
+const tabs = allTabs;
 
 const ROLE_REDIRECT: Record<Role, string> = {
   superadmin: "/dashboard/admin",
@@ -180,11 +180,14 @@ function LoginContent() {
       setEmail("smk77165@gmail.com");
       setPassword("Add@123");
     } else if (role === "coordinator") {
-      setEmail("coordinator@demo.com");
+      setEmail("sumit@gmail.com");
       setPassword("password123");
       setUniqueId("VC-HCF-2025-0042");
     } else if (role === "ngodashboard") {
-      setEmail("ngo@demo.com");
+      setEmail("payalkedare26@gmail.com");
+      setPassword("password123");
+    } else if (role === "user") {
+      setEmail("jon@gmail.com");
       setPassword("password123");
     }
   };
@@ -329,15 +332,13 @@ function LoginContent() {
                 {loading ? "Signing in..." : "Sign In"}
               </button>
 
-              {activeRole !== "user" && (
-                <button
-                  type="button"
-                  onClick={() => fillDemoCreds(activeRole)}
-                  className="w-full py-2 border border-primary/20 rounded-xl text-[10px] uppercase font-black text-primary/60 hover:text-primary hover:bg-primary/5 transition-all tracking-[0.2em]"
-                >
-                  Use Demo Credentials
-                </button>
-              )}
+              <button
+                type="button"
+                onClick={() => fillDemoCreds(activeRole)}
+                className="w-full py-2 border border-primary/20 rounded-xl text-[10px] uppercase font-black text-primary/60 hover:text-primary hover:bg-primary/5 transition-all tracking-[0.2em]"
+              >
+                Use Demo Credentials
+              </button>
 
               {showOAuthOnly && (
                 <div className="grid grid-cols-1 gap-4">
@@ -363,6 +364,33 @@ function LoginContent() {
                   Register here
                 </Link>
               </p>
+
+              <div className="pt-6 border-t border-white/10">
+                <p className="text-[10px] text-center text-text-muted uppercase tracking-[0.2em] font-black mb-4">
+                  Available Roles & Access
+                </p>
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="p-3 glass rounded-xl text-center">
+                    <p className="text-[10px] font-bold text-primary mb-1">ADMIN</p>
+                    <p className="text-[9px] text-text-muted truncate">sahilkedare05@gmail.com</p>
+                  </div>
+                  <div className="p-3 glass rounded-xl text-center">
+                    <p className="text-[10px] font-bold text-primary mb-1">USER</p>
+                    <p className="text-[9px] text-text-muted truncate">jon@gmail.com</p>
+                  </div>
+                  <div className="p-3 glass rounded-xl text-center">
+                    <p className="text-[10px] font-bold text-primary mb-1">NGO</p>
+                    <p className="text-[9px] text-text-muted truncate">payalkedare26@gmail.com</p>
+                  </div>
+                  <div className="p-3 glass rounded-xl text-center">
+                    <p className="text-[10px] font-bold text-primary mb-1">COORD</p>
+                    <p className="text-[9px] text-text-muted truncate">sumit@gmail.com</p>
+                  </div>
+                </div>
+                <p className="mt-4 text-[9px] text-center text-text-muted italic">
+                  Note: All passwords default to <span className="text-primary font-bold">password123</span> unless specified.
+                </p>
+              </div>
             </motion.div>
         </AnimatePresence>
 
