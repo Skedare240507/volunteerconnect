@@ -49,19 +49,6 @@ VolunteerConnect acts as an **intelligent middleman**. When an NGO logs a resour
 
 ---
 
-## 📁 Project Structure
-
-```text
-├── src/
-│   ├── app/            # Next.js App Router (Auth, Dashboards, API)
-│   ├── components/     # High-performance UI components (Maps, AI Chat, etc.)
-│   ├── lib/            # Shared logic (Firebase config, AI helpers, Auth context)
-│   └── styles/         # Global design system and animations
-├── public/             # Static assets and map markers
-└── functions/          # Firebase Cloud Functions (Typescript)
-```
-
----
 
 ## 📦 Getting Started
 
